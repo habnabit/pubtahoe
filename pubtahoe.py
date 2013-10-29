@@ -9,6 +9,7 @@ from twisted.web.resource import Resource, NoResource
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.template import tags, renderElement
 
+import crockford
 import magic
 
 import mimetypes
@@ -16,6 +17,7 @@ import base64
 import urllib
 import json
 import re
+import os
 
 
 tahoeRegex = re.compile(
@@ -124,12 +126,15 @@ class TahoeResource(Resource):
 
 
 class PubTahoeResource(Resource):
-    def __init__(self, agent, tahoeURL):
+    def __init__(self, shortdb, agent, tahoeURL):
         Resource.__init__(self)
+        self.shortdb = shortdb
         self.agent = agent
         self.tahoeURL = tahoeURL
 
     def getChild(self, child, request):
+        if len(child) == 15 and child in self.shortdb:
+            child = self.shortdb[child]
         cap, _, ext = child.partition('.')
         try:
             cap = base64.urlsafe_b64decode(cap)
@@ -142,6 +147,10 @@ class PubTahoeResource(Resource):
 
 
 class TahoeConverterResource(Resource):
+    def __init__(self, shortdb):
+        Resource.__init__(self)
+        self.shortdb = shortdb
+
     def render_GET(self, request):
         body = tags.form(
             tags.label('Tahoe URI', for_='uri'), ' ',
@@ -162,6 +171,20 @@ class TahoeConverterResource(Resource):
 
         b64uri = base64.urlsafe_b64encode(uri[0])
         if ext and ext[0]:
-            b64uri = '%s.%s' % (b64uri, ext[0])
-        body = tags.p(tags.a(uri, href=b64uri))
+            b64uri = '%s.%s' % (b64uri, ext[0].lstrip('.'))
+        if b64uri not in self.shortdb:
+            while True:
+                short = os.urandom(9)
+                if short not in self.shortdb:
+                    break
+            short = crockford.b32encode(short).lower()
+            self.shortdb[short] = b64uri
+            self.shortdb[b64uri] = short
+            self.shortdb.sync()
+        else:
+            short = self.shortdb[b64uri]
+
+        body = tags.p(
+            tags.a('long url', href=b64uri), '; ',
+            tags.a('short url', href=short))
         return renderElement(request, body)
