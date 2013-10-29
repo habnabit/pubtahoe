@@ -73,12 +73,12 @@ class TahoeReceiver(protocol.Protocol):
         self.buffer.append(data)
         self.received += len(data)
         if self.received > 16384:
-            self.transport.pauseProducing()
             self.initialDeferred.callback(''.join(self.buffer))
             self.buffer = None
 
     def finish(self, result):
         self.requestFinished = True
+        self.transport.stopProducing()
 
     def connectionLost(self, reason):
         if self.buffer is not None:
