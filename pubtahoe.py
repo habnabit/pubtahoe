@@ -2,8 +2,7 @@
 # See COPYING for details.
 
 from twisted.internet.error import ConnectionDone, ConnectionLost
-from twisted.internet import protocol, defer, endpoints
-from twisted.python import log
+from twisted.internet import protocol, defer
 from twisted.web.client import ResponseDone, ResponseFailed
 from twisted.web.http import PotentialDataLoss
 from twisted.web.resource import Resource, NoResource
@@ -15,11 +14,8 @@ import magic
 import mimetypes
 import base64
 import urllib
-import struct
-import socket
 import json
 import re
-import os
 
 
 tahoeRegex = re.compile(
