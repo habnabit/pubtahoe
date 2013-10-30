@@ -22,7 +22,7 @@ import os
 
 tahoeRegex = re.compile(
     '(URI:(?:(?:CHK|DIR2(?:-MDMF)?(?:-(?:CHK|LIT|RO))?|LIT|(?:SSK|MDMF)(?:-RO)'
-    '?):)[A-Za-z0-9:]+)'
+    '?):)[A-Za-z0-9:]*)'
 )
 
 
