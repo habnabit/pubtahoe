@@ -3,6 +3,7 @@
 
 from twisted.internet.error import ConnectionDone, ConnectionLost
 from twisted.internet import protocol, defer
+from twisted.python import log
 from twisted.web.client import ResponseDone, ResponseFailed
 from twisted.web.http import PotentialDataLoss
 from twisted.web.resource import Resource, NoResource
@@ -125,12 +126,20 @@ class TahoeResource(Resource):
             mime = magic.from_buffer(initial, mime=True)
         mime = mime or 'application/octet-stream'
         request.setHeader('content-type', mime)
-        request.write(initial)
+        if initial:
+            request.write(initial)
         request.notifyFinish().addBoth(receiver.finish)
+
+    def _logError(self, failure, request):
+        log.err(failure, 'processing failed')
+        try:
+            request.processingFailed(failure)
+        except Exception:
+            log.err(None, 'error displaying failure')
 
     def render_GET(self, request):
         d = self._fetchFromTahoe(request)
-        d.addErrback(request.processingFailed)
+        d.addErrback(self._logError, request)
         return NOT_DONE_YET
 
 
