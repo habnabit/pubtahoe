@@ -176,7 +176,7 @@ class TahoeConverterResource(Resource):
 
     def render_POST(self, request):
         uri = request.args.get('uri', [])
-        if not uri:
+        if not uri or not tahoeRegex.match(uri[0]):
             return self.render_GET(request)
         ext = request.args.get('ext', [])
 
