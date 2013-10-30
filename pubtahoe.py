@@ -175,10 +175,9 @@ class TahoeConverterResource(Resource):
             b64uri = '%s.%s' % (b64uri, ext[0].lstrip('.'))
         if b64uri not in self.shortdb:
             while True:
-                short = os.urandom(9)
+                short = crockford.b32encode(os.urandom(9)).lower()
                 if short not in self.shortdb:
                     break
-            short = crockford.b32encode(short).lower()
             self.shortdb[short] = uri[0]
             self.shortdb[uri[0]] = short
             self.shortdb.sync()
