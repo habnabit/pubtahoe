@@ -142,9 +142,10 @@ class PubTahoeResource(Resource):
         self.tahoeURL = tahoeURL
 
     def getChild(self, child, request):
-        if len(child) == 15 and child in self.shortdb:
-            child = self.shortdb[child]
         cap, _, ext = child.partition('.')
+        if len(cap) == 15 and cap in self.shortdb:
+            cap, _, storedExt = self.shortdb[cap].partition('.')
+            ext = ext or storedExt
         if not tahoeRegex.match(cap):
             try:
                 cap = base64.urlsafe_b64decode(cap)
@@ -180,9 +181,10 @@ class TahoeConverterResource(Resource):
         ext = request.args.get('ext', [])
 
         b64uri = base64.urlsafe_b64encode(uri[0])
+        extension = ''
         if ext and ext[0]:
-            b64uri = '%s.%s' % (b64uri, ext[0].lstrip('.'))
-        if b64uri not in self.shortdb:
+            extension = '.' + ext[0].lstrip('.')
+        if uri[0] not in self.shortdb:
             while True:
                 short = crockford.b32encode(os.urandom(9)).lower()
                 if short not in self.shortdb:
@@ -191,10 +193,10 @@ class TahoeConverterResource(Resource):
             self.shortdb[uri[0]] = short
             self.shortdb.sync()
         else:
-            short = self.shortdb[b64uri]
+            short = self.shortdb[uri[0]]
 
         body = tags.p(
-            tags.a('long url', href=b64uri), '; ',
-            tags.a('medium url', href='/' + uri[0]), '; ',
-            tags.a('short url', href=short))
+            tags.a('long url', href=b64uri + extension), '; ',
+            tags.a('medium url', href='/' + uri[0] + extension), '; ',
+            tags.a('short url', href=short + extension))
         return renderElement(request, body)
