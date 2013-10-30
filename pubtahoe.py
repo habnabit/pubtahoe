@@ -136,12 +136,13 @@ class PubTahoeResource(Resource):
         if len(child) == 15 and child in self.shortdb:
             child = self.shortdb[child]
         cap, _, ext = child.partition('.')
-        try:
-            cap = base64.urlsafe_b64decode(cap)
-        except TypeError:  # TypeError??? really???
-            return NoResource('Invalid base64')
         if not tahoeRegex.match(cap):
-            return NoResource('Not a valid tahoe CAP URI')
+            try:
+                cap = base64.urlsafe_b64decode(cap)
+            except TypeError:  # TypeError??? really???
+                return NoResource('Invalid base64')
+            if not tahoeRegex.match(cap):
+                return NoResource('Not a valid tahoe CAP URI')
         capURL = self.tahoeURL + urllib.quote(cap)
         return TahoeResource(self.agent, capURL, ext)
 
@@ -178,13 +179,14 @@ class TahoeConverterResource(Resource):
                 if short not in self.shortdb:
                     break
             short = crockford.b32encode(short).lower()
-            self.shortdb[short] = b64uri
-            self.shortdb[b64uri] = short
+            self.shortdb[short] = uri[0]
+            self.shortdb[uri[0]] = short
             self.shortdb.sync()
         else:
             short = self.shortdb[b64uri]
 
         body = tags.p(
             tags.a('long url', href=b64uri), '; ',
+            tags.a('medium url', href='/' + uri[0]), '; ',
             tags.a('short url', href=short))
         return renderElement(request, body)
