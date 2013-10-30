@@ -95,6 +95,14 @@ class TahoeResource(Resource):
         self.capURL = capURL
         self.extension = extension
 
+    def _showDirectory(self, request, dirinfo):
+        children = dirinfo[1]['children']
+        body = tags.ul(*[
+            tags.li(tags.a(name, href='/' + info[1]['ro_uri']))
+            for name, info in children.iteritems()
+        ])
+        renderElement(request, body)
+
     @defer.inlineCallbacks
     def _fetchFromTahoe(self, request):
         d = self.agent.request('GET', self.capURL + '?t=json')
@@ -102,7 +110,8 @@ class TahoeResource(Resource):
         d.addCallback(json.loads)
         info = yield d
         if info[0] == 'dirnode':
-            raise ValueError("you can't request a directory (yet).")
+            self._showDirectory(request, info)
+            return
         elif info[0] != 'filenode':
             raise ValueError("that's not a valid CAP!")
 
