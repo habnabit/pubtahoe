@@ -99,7 +99,8 @@ class TahoeResource(Resource):
     def _showDirectory(self, request, dirinfo):
         children = dirinfo[1]['children']
         body = tags.ul(*[
-            tags.li(tags.a(name, href='/' + info[1]['ro_uri']))
+            tags.li(tags.a(name + ('/' if info[0] == 'dirnode' else ''),
+                           href='/' + info[1]['ro_uri']))
             for name, info in children.iteritems()
         ])
         renderElement(request, body)
