@@ -205,6 +205,9 @@ class TahoeConverterResource(Resource):
         else:
             short = self.shortdb[uri[0]]
 
+        if request.args.get('api', []):
+            return '/' + short + extension
+
         body = tags.p(
             tags.a('long url', href=b64uri + extension), '; ',
             tags.a('medium url', href='/' + uri[0] + extension), '; ',
